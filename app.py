@@ -81,7 +81,9 @@ def extract_frames():
 def copySelectedFrames(num_of_frames):
     print(random.choice((os.listdir("./data/"))))
 
-    for randomFrame in random.choices(os.listdir("./data/"), k=int(num_of_frames/4)):
+    num_of_short_list = int(num_of_frames/8)
+    print(num_of_short_list)
+    for randomFrame in random.choices(os.listdir("./data/"), k=num_of_short_list):
         shutil.copy("./data/"+randomFrame, frames_to_detect_dir)
 
 
