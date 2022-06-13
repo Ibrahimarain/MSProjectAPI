@@ -122,7 +122,7 @@ def extract_features():
         features = ["product", "height", "brand", "color", "colour", "type", "material", "model", "price", "features",
                     "speciality"]
         worf_quote = ""
-        output_file_name = "voice"
+        # output_file_name = "voice"
 
         filename = f"{output_file_name}.{output_ext}"
         # subprocess.call(['ffmpeg', '-i', 'voice.mp3',
