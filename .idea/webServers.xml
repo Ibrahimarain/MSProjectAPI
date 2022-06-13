@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="198fb4ed-c526-448c-bf38-54d758142329" name="projectserver" url="http://10.1.42.111">
+        <fileTransfer mountedRoot="C:\Users\ibrahim.mushtaque\PycharmProjects\MSProjectAPI" accessType="MOUNT" port="0" />
+      </webServer>
+    </option>
+  </component>
+</project>
