@@ -15,6 +15,8 @@ import os
 # from pydub.silence import split_on_silence
 import os
 import sys
+import shutil
+import random
 
 print(cv2.__version__)
 
@@ -25,9 +27,12 @@ app = Flask(__name__)
 
 output_file_name = "audio_only"
 output_ext = "wav"
-frames_output_dir = "./data/frame"
+# frames_output_dir = "./data/frame"
 frames_to_detect_dir = "./frames"
 
+
+# frame
+# num_of_frames = 0
 
 def extract_frames():
     print("Extracting Frames")
@@ -45,7 +50,6 @@ def extract_frames():
     except OSError:
         print('Error: Creating directory of data')
 
-    # frame
     currentframe = 0
 
     while True:
@@ -55,7 +59,7 @@ def extract_frames():
 
         if ret:
             # if video is still left continue creating images
-            name = frames_output_dir + str(currentframe) + '.jpg'
+            name = './data/frame' + str(currentframe) + '.jpg'
             # print('Creating...' + name)
 
             # writing the extracted images
@@ -71,6 +75,15 @@ def extract_frames():
     cam.release()
     cv2.destroyAllWindows()
 
+    return currentframe
+
+
+def copySelectedFrames(num_of_frames):
+    print(random.choice((os.listdir("./data/"))))
+
+    for randomFrame in random.choices(os.listdir("./data/"), k=int(num_of_frames/4)):
+        shutil.copy("./data/"+randomFrame, frames_to_detect_dir)
+
 
 def convert_video_to_audio_ffmpeg(video_file, output_ext="wav"):
     """Converts video to audio directly using `ffmpeg` command
@@ -85,10 +98,13 @@ def convert_video_to_audio_ffmpeg(video_file, output_ext="wav"):
 
 @app.route('/')
 def open_home():  # put application's code here
-    extract_frames()
+    num_of_frames = extract_frames()
+    copySelectedFrames(num_of_frames)
     vf = "sampleVideo.mp4"
     convert_video_to_audio_ffmpeg(vf)
-    return render_template('view.html')
+    features = extract_features()
+    print(features)
+    return render_template('view.html', data=features)
 
 
 if __name__ == '__main__':
@@ -98,12 +114,13 @@ if __name__ == '__main__':
 # flask run -h 0.0.0.0
 
 # @app.route('/features', methods=['GET'])
-@app.route('/features', methods=['GET'])
+# @app.route('/features', methods=['GET'])
 def extract_features():
     try:
         features = ["product", "height", "brand", "color", "colour", "type", "material", "model", "price", "features",
                     "speciality"]
         worf_quote = ""
+        output_file_name = "voice"
 
         filename = f"{output_file_name}.{output_ext}"
         # subprocess.call(['ffmpeg', '-i', 'voice.mp3',
@@ -165,6 +182,8 @@ def extract_features():
             print(f)
             response.append(f)
             print("\n")
+
+        return response
 
         response.append(worf_quote)
         response = json.dumps(response)

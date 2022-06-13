@@ -84,8 +84,8 @@ footer {
 
 	{% for row in data: %}
 		<div style="margin:auto; width: 600px">
-			<h3> Query:  {{row[0]}} </h3>
-			<div id="{% print(row[2]) %}" style="width: 600px; height: 400px;"></div>
+			<h3> {{row}} </h3>
+{#			<div id="{% print(row[2]) %}" style="width: 600px; height: 400px;"></div>#}
 		</div>
 
 	{% endfor %}
