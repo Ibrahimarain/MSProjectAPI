@@ -18,6 +18,11 @@ import sys
 import shutil
 import random
 
+import torch
+import zipfile
+import torchaudio
+from glob import glob
+
 print(cv2.__version__)
 
 # nltk.download("stopwords")
@@ -81,10 +86,10 @@ def extract_frames():
 def copySelectedFrames(num_of_frames):
     print(random.choice((os.listdir("./data/"))))
 
-    num_of_short_list = int(num_of_frames/8)
+    num_of_short_list = int(num_of_frames / 8)
     print(num_of_short_list)
     for randomFrame in random.choices(os.listdir("./data/"), k=num_of_short_list):
-        shutil.copy("./data/"+randomFrame, frames_to_detect_dir)
+        shutil.copy("./data/" + randomFrame, frames_to_detect_dir)
 
 
 def convert_video_to_audio_ffmpeg(video_file, output_ext="wav"):
@@ -104,8 +109,10 @@ def open_home():  # put application's code here
     copySelectedFrames(num_of_frames)
     vf = "sampleVideo.mp4"
     convert_video_to_audio_ffmpeg(vf)
-    features = extract_features()
+    features = extract_features_model()
     print(features)
+    extract_features_model()
+
     return render_template('view.html', data=features)
 
 
@@ -115,9 +122,175 @@ if __name__ == '__main__':
 
 # flask run -h 0.0.0.0
 
-# @app.route('/features', methods=['GET'])
-# @app.route('/features', methods=['GET'])
+
 def extract_features():
+    try:
+        features = ["product", "height", "brand", "color", "colour", "type", "material", "model", "price", "features",
+                    "speciality"]
+        worf_quote = ""
+        # output_file_name = "voice"
+
+        filename = f"{output_file_name}.{output_ext}"
+        # subprocess.call(['ffmpeg', '-i', 'voice.mp3',
+        #                  'voice.wav'])
+
+        # worf_quote = get_large_audio_transcription('voice2.wav')
+        # print(worf_quote)
+
+        # pip install - q torchaudio omegaconf soundfile
+
+        r = sr.Recognizer()
+        with sr.AudioFile(filename) as source:
+            # listen for the data (load audio to memory)
+            audio_data = r.record(source)
+            # recognize (convert from speech to text)
+            # text = r.recognize_google(audio_data)
+            # print(text)
+            worf_quote = r.recognize_google(audio_data, language="en")
+            print(worf_quote)
+
+        worf_quote = remove_brackets(worf_quote)
+        worf_quote = worf_quote.lower()
+        print(worf_quote)
+        words_in_quote = word_tokenize(worf_quote)
+        stop_words = set(stopwords.words("english"))
+        filtered_list = []
+
+        for word in words_in_quote:
+            if word.casefold() not in stop_words:
+                filtered_list.append(word)
+
+        featuresFound = []
+        featuresIndexes = []
+        features_list = []
+        response = []
+        Output = filtered_list.copy()
+        # print(filtered_list)
+
+        # Using iteration
+        for elem in filtered_list:
+            for n in features:
+                if n in elem:
+                    featuresFound.append(elem)
+
+        # print("Features Found :", featuresFound)
+
+        for feature in featuresFound:
+            featuresIndexes.append(filtered_list.index(feature))
+
+        for index in range(len(featuresIndexes)):
+            if index < len(featuresIndexes) - 1:
+                indexValue = featuresIndexes[index]
+                indexNextValue = featuresIndexes[index + 1]
+                features_list.append(filtered_list[indexValue:indexNextValue])
+
+        print("\n")
+        for f in features_list:
+            print(f[0])
+            response.append(f[0])
+            f.pop(0)
+            print(f)
+            response.append(f)
+            print("\n")
+
+        return response
+
+        response.append(worf_quote)
+        response = json.dumps(response)
+        return response, 200
+
+    except Exception as ex:
+        response = json.dumps({'response': str(ex)})
+        return response, 400
+
+
+def extract_features_model():
+    try:
+        features = ["product", "height", "brand", "color", "colour", "type", "material", "model", "price", "features",
+                    "speciality"]
+        worf_quote = ""
+        # output_file_name = "voice"
+
+        filename = f"{output_file_name}.{output_ext}"
+        device = torch.device('cpu')
+        model, decoder, utils = torch.hub.load(repo_or_dir='snakers4/silero-models',
+                                               model='silero_stt',
+                                               language='en',  # also available 'de', 'es'
+                                               device=device)
+        (read_batch, split_into_batches,
+         read_audio, prepare_model_input) = utils  # see function signature for details
+
+        test_files = glob("audio_only.wav")
+        batches = split_into_batches(test_files, batch_size=10)
+        input_ = prepare_model_input(read_batch(batches[0]),
+                                     device=device)
+
+        output = model(input_)
+        text_output = []
+        for example in output:
+            print(decoder(example.cpu()))
+            text_output.append(decoder(example.cpu()))
+
+        worf_quote = " ".join(text_output)
+        worf_quote = remove_brackets(worf_quote)
+        worf_quote = worf_quote.lower()
+        print(worf_quote)
+        words_in_quote = word_tokenize(worf_quote)
+        stop_words = set(stopwords.words("english"))
+        filtered_list = []
+
+        for word in words_in_quote:
+            if word.casefold() not in stop_words:
+                filtered_list.append(word)
+
+        featuresFound = []
+        featuresIndexes = []
+        features_list = []
+        response = []
+        Output = filtered_list.copy()
+        # print(filtered_list)
+
+        # Using iteration
+        for elem in filtered_list:
+            for n in features:
+                if n in elem:
+                    featuresFound.append(elem)
+
+        # print("Features Found :", featuresFound)
+
+        for feature in featuresFound:
+            featuresIndexes.append(filtered_list.index(feature))
+
+        for index in range(len(featuresIndexes)):
+            if index < len(featuresIndexes) - 1:
+                indexValue = featuresIndexes[index]
+                indexNextValue = featuresIndexes[index + 1]
+                features_list.append(filtered_list[indexValue:indexNextValue])
+
+        print("\n")
+        for f in features_list:
+            print(f[0])
+            f0 = f[0]
+            f.pop(0)
+            response_dictionary = {f0: " ".join(f)}
+            print(f)
+            response.append(response_dictionary)
+            print("\n")
+
+        # response.append(worf_quote)
+        return response
+
+        response = json.dumps(response)
+        return response, 200
+
+    except Exception as ex:
+        response = json.dumps({'response': str(ex)})
+        return response, 400
+
+
+
+@app.route('/features', methods=['GET'])
+def extract_features_api():
     try:
         features = ["product", "height", "brand", "color", "colour", "type", "material", "model", "price", "features",
                     "speciality"]
@@ -179,15 +352,14 @@ def extract_features():
         print("\n")
         for f in features_list:
             print(f[0])
-            response.append(f[0])
+            f0 = f[0]
             f.pop(0)
+            response_dictionary = {f0: " ".join(f)}
             print(f)
-            response.append(f)
+            response.append(response_dictionary)
             print("\n")
 
-        return response
-
-        response.append(worf_quote)
+        # response.append(worf_quote)
         response = json.dumps(response)
         return response, 200
 
